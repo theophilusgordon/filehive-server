@@ -6,7 +6,4 @@ export class CreateFileDto {
 
   @IsNotEmpty()
   description: string;
-
-  @IsNotEmpty({ message: 'Please add a file' })
-  file: Express.Multer.File;
 }

@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateFileDto } from './dtos/create-file.dto';
 import { File } from './interface/file.interface';
 import { S3Service } from 'src/s3/s3.service';
+import { UpdateFileDto } from './dtos/update-file.dto';
 
 @Injectable()
 export class FilesService {
@@ -15,6 +16,10 @@ export class FilesService {
     createFileDto: CreateFileDto,
     file: Express.Multer.File,
   ): Promise<File> {
+    if (!file) {
+      throw new Error('Please add a file');
+    }
+
     const { title, description } = createFileDto;
 
     const fileUrl = await this.upload(file);
@@ -49,7 +54,7 @@ export class FilesService {
     return file;
   }
 
-  async updateOne(id: string, updateFileDto: CreateFileDto): Promise<File> {
+  async updateOne(id: string, updateFileDto: UpdateFileDto): Promise<File> {
     await this.findOne(id);
 
     const { title, description } = updateFileDto;

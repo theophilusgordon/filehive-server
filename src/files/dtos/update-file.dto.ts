@@ -6,7 +6,4 @@ export class UpdateFileDto {
 
   @IsOptional()
   description: string;
-
-  @IsOptional()
-  file: Express.Multer.File;
 }
