@@ -1,4 +1,3 @@
-import { Exclude } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateUserDto {
@@ -7,8 +6,10 @@ export class CreateUserDto {
   email: string;
 
   @IsNotEmpty()
-  @Exclude()
   password: string;
+
+  @IsNotEmpty()
+  confirmPassword: string;
 
   @IsOptional()
   firstName: string;
@@ -21,4 +22,7 @@ export class CreateUserDto {
 
   @IsOptional()
   profilePhoto: string;
+
+  @IsOptional()
+  role: string;
 }

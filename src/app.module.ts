@@ -4,10 +4,21 @@ import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
 import { AuthService } from './auth/auth.service';
 import { AuthController } from './auth/auth.controller';
+import { JwtService } from '@nestjs/jwt';
+import { FilesController } from './files/files.controller';
+import { FilesService } from './files/files.service';
+import { S3Service } from './s3/s3.service';
 
 @Module({
   imports: [],
-  controllers: [UsersController, AuthController],
-  providers: [PrismaService, UsersService, AuthService],
+  controllers: [UsersController, AuthController, FilesController],
+  providers: [
+    PrismaService,
+    UsersService,
+    AuthService,
+    JwtService,
+    FilesService,
+    S3Service,
+  ],
 })
 export class AppModule {}

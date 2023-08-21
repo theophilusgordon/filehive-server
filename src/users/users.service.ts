@@ -9,10 +9,25 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
   async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const { email, password, profilePhoto, firstName, lastName, otherNames } =
-      createUserDto;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const {
+      email,
+      password,
+      confirmPassword,
+      profilePhoto,
+      firstName,
+      lastName,
+      otherNames,
+    } = createUserDto;
+
+    const userExists = await this.prismaService.user.findUnique({
+      where: { email },
+    });
+
+    if (userExists) {
+      throw new Error(`User with email: ${email} already exists`);
+    }
+
+    const hashedPassword = await this.hashPassword(password, confirmPassword);
 
     const user = await this.prismaService.user.create({
       data: {
@@ -47,11 +62,17 @@ export class UsersService {
         otherNames: true,
       },
     });
+
+    if (!user) {
+      throw new Error(`User with id: ${id} not found`);
+    }
+
     return user;
   }
 
-  async getAllUsers(): Promise<User[]> {
-    const users = await this.prismaService.user.findMany({
+  async getUserByEmail(email: string): Promise<User> {
+    return await this.prismaService.user.findUnique({
+      where: { email },
       select: {
         id: true,
         email: true,
@@ -61,19 +82,46 @@ export class UsersService {
         otherNames: true,
       },
     });
-    return users;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await this.prismaService.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        profilePhoto: true,
+        firstName: true,
+        lastName: true,
+        otherNames: true,
+      },
+    });
   }
 
   async updateUser(id: string, updateUserDto: UpdateUserDto) {
-    const { profilePhoto, firstName, lastName, otherNames, password } =
-      updateUserDto;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const {
+      profilePhoto,
+      firstName,
+      lastName,
+      otherNames,
+      password,
+      confirmPassword,
+    } = updateUserDto;
+    const user = await this.userExistsById(id);
 
-    const user = await this.prismaService.user.update({
+    let updatedProfilePhotoUrl = user.profilePhoto;
+    if (profilePhoto) {
+      updatedProfilePhotoUrl = profilePhoto;
+    }
+
+    let hashedPassword = user.password;
+    if (password) {
+      hashedPassword = await this.hashPassword(password, confirmPassword);
+    }
+
+    return await this.prismaService.user.update({
       where: { id },
       data: {
-        profilePhoto,
+        profilePhoto: updatedProfilePhotoUrl,
         firstName,
         lastName,
         otherNames,
@@ -88,10 +136,11 @@ export class UsersService {
         otherNames: true,
       },
     });
-    return user;
   }
 
   async deleteUser(id: string) {
+    await this.userExistsById(id);
+
     const user = await this.prismaService.user.delete({
       where: { id },
       select: {
@@ -104,5 +153,24 @@ export class UsersService {
       },
     });
     return user;
+  }
+
+  private async userExistsById(id: string) {
+    const userExists = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+    if (!userExists) {
+      throw new Error(`User with id: ${id} not found`);
+    }
+    return userExists;
+  }
+
+  private async hashPassword(password: string, confirmPassword: string) {
+    if (password !== confirmPassword) {
+      throw new Error('Passwords do not match');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    return await bcrypt.hash(password, salt);
   }
 }

@@ -3,14 +3,20 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { User } from './interfaces/user.interface';
 import { UpdateUserDto } from './dtos/update-user.dto';
+import { Roles } from 'src/auth/roles/roles.decorator';
+import { RolesGuard } from 'src/auth/roles/roles.guard';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -18,29 +24,53 @@ export class UsersController {
 
   @Post()
   async createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.createUser(createUserDto);
+    try {
+      return await this.usersService.createUser(createUserDto);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Get()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async getAllUsers(): Promise<User[]> {
-    return this.usersService.getAllUsers();
+    try {
+      return await this.usersService.getAllUsers();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+    }
   }
 
-  @Get(':id')
-  async getUserById(id: string): Promise<User> {
-    return this.usersService.getUserById(id);
+  @Get('user/:id')
+  async getUserById(@Param('id') id: string): Promise<User> {
+    try {
+      return await this.usersService.getUserById(id);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
-  @Patch(':id')
+  @Patch('user/:id')
   async updateUser(
-    @Param() id: string,
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return this.usersService.updateUser(id, updateUserDto);
+    try {
+      return await this.usersService.updateUser(id, updateUserDto);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
-  @Delete(':id')
-  async deleteUser(@Param() id: string): Promise<User> {
-    return this.usersService.deleteUser(id);
+  @Delete('user/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async deleteUser(@Param('id') id: string): Promise<User> {
+    try {
+      return await this.usersService.deleteUser(id);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_GATEWAY);
+    }
   }
 }

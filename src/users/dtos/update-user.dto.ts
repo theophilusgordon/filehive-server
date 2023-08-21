@@ -1,10 +1,11 @@
-import { Exclude } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
-  @Exclude()
   password: string;
+
+  @IsOptional()
+  confirmPassword: string;
 
   @IsOptional()
   firstName: string;
