@@ -76,6 +76,12 @@ export class FilesService {
     });
   }
 
+  private getFileByTitle(title: string): Promise<File> {
+    return this.prismaService.file.findFirst({
+      where: { title },
+    });
+  }
+
   private async upload(file: Express.Multer.File): Promise<string> {
     const bucketName = process.env.AWS_S3_BUCKET_NAME;
     const fileKey = `uploads/${file.originalname}`;

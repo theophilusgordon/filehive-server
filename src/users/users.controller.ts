@@ -7,11 +7,9 @@ import {
   HttpStatus,
   Param,
   Patch,
-  Post,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dtos/create-user.dto';
 import { User } from './interfaces/user.interface';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { Roles } from 'src/auth/roles/roles.decorator';
@@ -21,15 +19,6 @@ import { AuthGuard } from 'src/auth/auth.guard';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  async createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
-    try {
-      return await this.usersService.createUser(createUserDto);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
-  }
 
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
