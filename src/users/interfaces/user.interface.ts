@@ -5,4 +5,5 @@ export interface User {
   readonly lastName: string;
   readonly otherNames: string;
   readonly profilePhoto: string;
+  readonly role: string;
 }

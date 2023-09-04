@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  HttpCode,
   HttpException,
   HttpStatus,
   Patch,
@@ -12,12 +13,17 @@ import { Authenticated } from './interface/access-token.interface';
 import { SignUpDto } from './dtos/sign-up.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly mailService: MailService,
+  ) {}
 
   @Post('sign-up')
+  @HttpCode(201)
   async signUp(@Body() signUpDto: SignUpDto): Promise<Authenticated> {
     try {
       return await this.authService.signUp(signUpDto);
@@ -27,6 +33,7 @@ export class AuthController {
   }
 
   @Post('sign-in')
+  @HttpCode(200)
   async signIn(@Body() signInDto: SignInDto): Promise<Authenticated> {
     try {
       return await this.authService.signIn(signInDto);
@@ -36,15 +43,25 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @HttpCode(200)
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     try {
-      return await this.authService.forgotPassword(forgotPasswordDto.email);
+      const userWithToken = await this.authService.forgotPassword(
+        forgotPasswordDto.email,
+      );
+      return await this.mailService.sendMail(
+        userWithToken.user,
+        'Reset Your Password',
+        './reset-password',
+        `${process.env.CLIENT_HOST}/reset-password/${userWithToken.token}`,
+      );
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 
   @Patch('reset-password')
+  @HttpCode(200)
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     try {
       return await this.authService.resetPassword(resetPasswordDto);

@@ -17,6 +17,7 @@ export class UsersService {
         firstName: true,
         lastName: true,
         otherNames: true,
+        role: true,
       },
     });
 
@@ -37,6 +38,7 @@ export class UsersService {
         firstName: true,
         lastName: true,
         otherNames: true,
+        role: true,
       },
     });
   }
@@ -50,6 +52,7 @@ export class UsersService {
         firstName: true,
         lastName: true,
         otherNames: true,
+        role: true,
       },
     });
   }
@@ -78,6 +81,7 @@ export class UsersService {
         firstName: true,
         lastName: true,
         otherNames: true,
+        role: true,
       },
     });
   }
@@ -94,6 +98,7 @@ export class UsersService {
         firstName: true,
         lastName: true,
         otherNames: true,
+        role: true,
       },
     });
     return user;

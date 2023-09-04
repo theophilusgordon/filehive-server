@@ -1,5 +1,6 @@
+import { User } from '../../users/interfaces/user.interface';
+
 export interface Authenticated {
   access_token: string;
-  id: string;
-  role: string;
+  user: User;
 }

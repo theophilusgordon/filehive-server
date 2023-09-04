@@ -24,17 +24,12 @@ export class FilesService {
 
     const fileUrl = await this.upload(file);
 
-    const fileSize =
-      file.size / (1024 * 1024) < 1
-        ? `${(file.size / 1024).toFixed(2)}KB`
-        : `${(file.size / (1024 * 1024)).toFixed(2)}MB`;
-
     return await this.prismaService.file.create({
       data: {
         title,
         description,
         url: fileUrl,
-        size: fileSize,
+        size: file.size.toString(),
       },
     });
   }

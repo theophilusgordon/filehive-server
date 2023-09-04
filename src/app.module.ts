@@ -8,9 +8,10 @@ import { JwtService } from '@nestjs/jwt';
 import { FilesController } from './files/files.controller';
 import { FilesService } from './files/files.service';
 import { S3Service } from './s3/s3.service';
+import { MailModule } from './mail/mail.module';
 
 @Module({
-  imports: [],
+  imports: [MailModule],
   controllers: [UsersController, AuthController, FilesController],
   providers: [
     PrismaService,

@@ -23,8 +23,15 @@ export class AuthService {
         expiresIn: '4h',
         secret: jwtConstants.secret,
       }),
-      id: user.id,
-      role: user.role,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        otherNames: user.otherNames,
+        profilePhoto: user.profilePhoto,
+        role: user.role,
+      },
     };
   }
 
@@ -47,7 +54,10 @@ export class AuthService {
       throw new Error(`User with email: ${email} already exists`);
     }
 
-    const hashedPassword = await this.hashPassword(password, confirmPassword);
+    const hashedPassword = await this.verifyAndHashPassword(
+      password,
+      confirmPassword,
+    );
 
     const user = await this.prismaService.user.create({
       data: {
@@ -72,34 +82,51 @@ export class AuthService {
       throw new Error(`User with email: ${email} not found`);
     }
 
-    return user;
+    const payload = { sub: user.id, role: user.role };
+
+    const token = await this.jwtService.signAsync(payload, {
+      expiresIn: '4h',
+      secret: jwtConstants.secret,
+    });
+
+    return {
+      user,
+      token,
+    };
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     const { token, password, confirmPassword } = resetPasswordDto;
 
-    const { sub: id } = await this.jwtService.verifyAsync(token, {
-      secret: jwtConstants.secret,
-    });
+    try {
+      const { sub: id } = await this.jwtService.verifyAsync(token, {
+        secret: jwtConstants.secret,
+      });
 
-    const user = await this.prismaService.user.findUnique({
-      where: { id },
-    });
+      const user = await this.prismaService.user.findUnique({
+        where: { id },
+      });
 
-    if (!user) {
-      throw new Error(`Invalid token`);
+      if (!user) {
+        throw new Error(`Invalid token or user not found`);
+      }
+
+      const hashedPassword = await this.verifyAndHashPassword(
+        password,
+        confirmPassword,
+      );
+
+      const updatedUser = await this.prismaService.user.update({
+        where: { id },
+        data: {
+          password: hashedPassword,
+        },
+      });
+
+      return this.signIn({ email: updatedUser.email, password });
+    } catch (error) {
+      throw new Error('Password reset failed. Please try again');
     }
-
-    const hashedPassword = await this.hashPassword(password, confirmPassword);
-
-    const updatedUser = await this.prismaService.user.update({
-      where: { id },
-      data: {
-        password: hashedPassword,
-      },
-    });
-
-    return this.signIn({ email: updatedUser.email, password });
   }
 
   private async validateUser(signInDto: SignInDto): Promise<any> {
@@ -115,7 +142,10 @@ export class AuthService {
     return user;
   }
 
-  private async hashPassword(password: string, confirmPassword: string) {
+  private async verifyAndHashPassword(
+    password: string,
+    confirmPassword: string,
+  ) {
     if (password !== confirmPassword) {
       throw new Error('Passwords do not match');
     }
