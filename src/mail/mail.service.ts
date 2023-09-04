@@ -17,4 +17,35 @@ export class MailService {
       },
     });
   }
+
+  async sendMailWithAttachment(
+    email: string,
+    subject: string,
+    template: string,
+    fileStream: any,
+    fileName: string,
+    sender: User,
+    recipient: User,
+  ) {
+    await this.mailerService.sendMail({
+      to: email,
+      subject,
+      template,
+      context: {
+        sender: `${sender.firstName} ${sender.lastName}`,
+        recipient: `${recipient.firstName} ${recipient.lastName}`,
+      },
+      attachments: [
+        {
+          filename: `${fileName}.pdf`,
+          content: fileStream,
+        },
+      ],
+    });
+
+    return { message: 'Email sent with attachment successfully' };
+  }
+  catch(error: never) {
+    throw new Error(error);
+  }
 }

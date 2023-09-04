@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -21,10 +22,16 @@ import { RolesGuard } from '../auth/roles/roles.guard';
 import { Roles } from '../auth/roles/roles.decorator';
 import { UpdateFileDto } from './dtos/update-file.dto';
 import { File } from './interface/file.interface';
+import { SendFileDto } from './dtos/send-file.dto';
+import { UsersService } from 'src/users/users.service';
+import { RequestWithUser } from 'src/auth/interface/request-with-user.interface';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(
+    private readonly filesService: FilesService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post('upload')
   @UseGuards(AuthGuard, RolesGuard)
@@ -83,6 +90,22 @@ export class FilesController {
   async deleteFile(@Param('id') id: string): Promise<File> {
     try {
       return await this.filesService.deleteOne(id);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Post('file/:id/send')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('ADMIN', 'USER')
+  async sendFile(
+    @Param('id') id: string,
+    @Body() sendFileDto: SendFileDto,
+    @Req() req: RequestWithUser,
+  ) {
+    try {
+      const sender = await this.usersService.getUserById(req.user.sub);
+      return await this.filesService.sendFile(id, sendFileDto.email, sender);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }

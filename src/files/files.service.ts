@@ -4,12 +4,18 @@ import { CreateFileDto } from './dtos/create-file.dto';
 import { File } from './interface/file.interface';
 import { S3Service } from 'src/s3/s3.service';
 import { UpdateFileDto } from './dtos/update-file.dto';
+import * as fs from 'fs';
+import { MailService } from 'src/mail/mail.service';
+import { User } from 'src/users/interfaces/user.interface';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class FilesService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly s3Service: S3Service,
+    private readonly mailService: MailService,
+    private readonly usersService: UsersService,
   ) {}
 
   async createFile(
@@ -71,10 +77,40 @@ export class FilesService {
     });
   }
 
-  private getFileByTitle(title: string): Promise<File> {
-    return this.prismaService.file.findFirst({
-      where: { title },
+  async searchFile(searchStr: string): Promise<File[]> {
+    const files = await this.prismaService.file.findMany({
+      where: {
+        title: {
+          contains: searchStr,
+          mode: 'insensitive',
+        },
+      },
     });
+
+    return files;
+  }
+
+  async sendFile(fileId: string, email: string, sender: User) {
+    const file = await this.findOne(fileId);
+    if (!file) {
+      throw new Error(`File with id: ${fileId} does not exist`);
+    }
+
+    const fileStream = fs.createReadStream(file.url);
+
+    const fileName = file.title;
+
+    const recipient = await this.usersService.getUserByEmail(email);
+
+    await this.mailService.sendMailWithAttachment(
+      email,
+      'FileHive File',
+      './send-file',
+      fileStream,
+      fileName,
+      sender,
+      recipient,
+    );
   }
 
   private async upload(file: Express.Multer.File): Promise<string> {
