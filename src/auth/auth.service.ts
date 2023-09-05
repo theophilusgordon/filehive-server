@@ -17,7 +17,7 @@ export class AuthService {
 
   async signIn(signInDto: SignInDto): Promise<Authenticated> {
     const user = await this.validateUser(signInDto);
-    const payload = { sub: user.id, role: user.role };
+    const payload = { id: user.id, role: user.role };
     return {
       access_token: await this.jwtService.signAsync(payload, {
         expiresIn: '4h',
@@ -82,7 +82,7 @@ export class AuthService {
       throw new Error(`User with email: ${email} not found`);
     }
 
-    const payload = { sub: user.id, role: user.role };
+    const payload = { id: user.id, role: user.role };
 
     const token = await this.jwtService.signAsync(payload, {
       expiresIn: '4h',
@@ -99,7 +99,7 @@ export class AuthService {
     const { token, password, confirmPassword } = resetPasswordDto;
 
     try {
-      const { sub: id } = await this.jwtService.verifyAsync(token, {
+      const { id } = await this.jwtService.verifyAsync(token, {
         secret: jwtConstants.secret,
       });
 

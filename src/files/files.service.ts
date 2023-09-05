@@ -102,15 +102,19 @@ export class FilesService {
 
     const recipient = await this.usersService.getUserByEmail(email);
 
-    await this.mailService.sendMailWithAttachment(
-      email,
-      'FileHive File',
-      './send-file',
-      fileStream,
-      fileName,
-      sender,
-      recipient,
-    );
+    try {
+      await this.mailService.sendMailWithAttachment(
+        email,
+        'FileHive File',
+        './send-file',
+        fileStream,
+        fileName,
+        sender,
+        recipient,
+      );
+    } catch (error) {
+      throw new Error(error);
+    }
   }
 
   private async upload(file: Express.Multer.File): Promise<string> {

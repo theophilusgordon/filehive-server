@@ -27,21 +27,25 @@ export class MailService {
     sender: User,
     recipient: User,
   ) {
-    await this.mailerService.sendMail({
-      to: email,
-      subject,
-      template,
-      context: {
-        sender: `${sender.firstName} ${sender.lastName}`,
-        recipient: `${recipient.firstName} ${recipient.lastName}`,
-      },
-      attachments: [
-        {
-          filename: `${fileName}.pdf`,
-          content: fileStream,
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject,
+        template,
+        context: {
+          sender: `${sender.firstName} ${sender.lastName}`,
+          recipient: `${recipient.firstName} ${recipient.lastName}`,
         },
-      ],
-    });
+        attachments: [
+          {
+            filename: `${fileName}.pdf`,
+            content: fileStream,
+          },
+        ],
+      });
+    } catch (error) {
+      throw new Error(error);
+    }
 
     return { message: 'Email sent with attachment successfully' };
   }

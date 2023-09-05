@@ -14,6 +14,7 @@ import { SignUpDto } from './dtos/sign-up.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { MailService } from 'src/mail/mail.service';
+import { User } from './user/user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -49,12 +50,22 @@ export class AuthController {
       const userWithToken = await this.authService.forgotPassword(
         forgotPasswordDto.email,
       );
-      return await this.mailService.sendMail(
-        userWithToken.user,
-        'Reset Your Password',
-        './reset-password',
-        `${process.env.CLIENT_HOST}/reset-password/${userWithToken.token}`,
-      );
+      try {
+        await this.mailService.sendMail(
+          userWithToken.user,
+          'Reset Your Password',
+          './reset-password',
+          `${process.env.CLIENT_HOST}/reset-password/${userWithToken.token}`,
+        );
+        return {
+          message: `A password reset link has been sent to ${userWithToken.user.email}`,
+        };
+      } catch (error) {
+        throw new HttpException(
+          'Something went wrong. Please try again later',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }

@@ -25,6 +25,7 @@ import { File } from './interface/file.interface';
 import { SendFileDto } from './dtos/send-file.dto';
 import { UsersService } from 'src/users/users.service';
 import { RequestWithUser } from 'src/auth/interface/request-with-user.interface';
+import { User } from 'src/auth/user/user.decorator';
 
 @Controller('files')
 export class FilesController {
@@ -101,10 +102,10 @@ export class FilesController {
   async sendFile(
     @Param('id') id: string,
     @Body() sendFileDto: SendFileDto,
-    @Req() req: RequestWithUser,
+    @User('id') userId: string,
   ) {
     try {
-      const sender = await this.usersService.getUserById(req.user.sub);
+      const sender = await this.usersService.getUserById(userId);
       return await this.filesService.sendFile(id, sendFileDto.email, sender);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
